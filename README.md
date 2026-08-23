@@ -85,8 +85,9 @@ Pedal firmware source. Only signed `.hex` builds are published.
 
 ## Before the first release
 
-- [ ] Verify HalfKay VID/PID and packet layout on real hardware
-- [ ] Set distinct USB product strings in each firmware's `platformio.ini`
+- [x] ~~Verify HalfKay VID/PID and packet layout on real hardware~~ — done 2026-08-22
+- [x] ~~USB product string — Mœræ~~ done via `usb_names.cpp` (not platformio.ini)
+- [ ] USB product string — **Leshy**, when its firmware starts; Rusalka needs its own mechanism
 - [ ] Generate the signing keypair; replace the placeholder public key
 - [ ] Stand up the manifest endpoint on the Cloudflare Worker
 - [ ] Decide the file-transfer protocol for Mœræ
