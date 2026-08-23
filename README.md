@@ -66,6 +66,7 @@ A native build reuses the same TypeScript UI and core and swaps one file.
 | `spike/` | Reboot-and-reclaim experiment |
 | `docs/protocol.md` | Device protocol notes and open questions |
 | `docs/setlist-editor.md` | Setlist editor concept — the app's second job |
+| `docs/ux.md` | UI is unbuilt; the spike pages are bench tools, not the product |
 
 ## Security model
 
