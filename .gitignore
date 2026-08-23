@@ -1,0 +1,20 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+
+# ─── NEVER COMMIT ─────────────────────────────────────────────────────────
+# The firmware SIGNING PRIVATE KEY. The public key belongs in src/keys.ts and
+# is meant to ship; the private key signs releases and must live offline, not
+# in this repo and not in CI.
+*.key
+*.pem
+secrets/
+
+# Cloudflare / deploy credentials
+.dev.vars
+.wrangler/
+wrangler.toml.local
+
+# Firmware binaries are published from the release pipeline, not committed here
+*.hex

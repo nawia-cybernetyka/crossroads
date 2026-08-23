@@ -1,0 +1,116 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Nawia — flash test</title>
+<style>
+  body { font: 15px/1.5 system-ui, sans-serif; max-width: 44rem; margin: 2rem auto; padding: 0 1rem; }
+  button { font: inherit; padding: .5rem 1rem; margin: 0 .5rem .5rem 0; }
+  button:disabled { opacity: .4; }
+  #log { background:#111; color:#b8e; padding:1rem; white-space:pre-wrap;
+         font-family: ui-monospace, monospace; font-size:13px; border-radius:6px; min-height:14rem; }
+  .danger { color:#a00; font-weight:600; }
+  progress { width: 100%; height: 1.2rem; }
+</style>
+
+<h1>Flash test</h1>
+
+<p>Runs the <strong>real</strong> <code>src/</code> code — <code>ihex.js</code> and
+<code>halfkay.js</code>, not a copy — to verify the three constants the spike
+could not: block size 1024, data offset 64, and the erase delay.</p>
+
+<p class="danger">This overwrites the firmware on the connected Teensy.</p>
+<p>That is safe and reversible: HalfKay lives on a <em>separate bootloader chip</em>
+(an MKL02), so no firmware you flash can prevent the board from re-entering the
+bootloader. Hold the Program button and it always comes back.</p>
+
+<ol>
+  <li>Put the board in bootloader mode (hold Program while plugging in).</li>
+  <li><strong>Parse only</strong> first — validates the .hex with no writes.</li>
+  <li><strong>Connect</strong>, then <strong>Flash</strong>.</li>
+</ol>
+
+<p>
+  <input type="file" id="file" accept=".hex">
+  <button id="bundled">Use bundled firmware.hex</button>
+</p>
+<p>
+  <button id="parse" disabled>1. Parse only (no writes)</button>
+  <button id="connect">2. Connect to bootloader</button>
+  <button id="flash" disabled>3. Flash</button>
+</p>
+<progress id="bar" value="0" max="1"></progress>
+<div id="log">ready.</div>
+
+<script type="module">
+  import { parseIntelHex } from "../src/ihex.js";
+  import { TEENSY41, PJRC_VENDOR_ID, HALFKAY_PRODUCT_ID } from "../src/devices.js";
+  import { flashHex } from "../src/halfkay.js";
+  import { WebHidTransport } from "../src/transport/webhid.js";
+
+  const el = document.getElementById("log");
+  const bar = document.getElementById("bar");
+  const log = (...a) => { el.textContent += "\n" + a.join(" "); el.scrollTop = 1e9; };
+
+  let hexText = null;
+  const transport = new WebHidTransport();
+
+  const setReady = () => {
+    document.getElementById("parse").disabled = !hexText;
+    document.getElementById("flash").disabled = !(hexText && transport.isOpen);
+  };
+
+  document.getElementById("file").onchange = async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    hexText = await f.text();
+    log(`loaded ${f.name} — ${f.size.toLocaleString()} bytes`); setReady();
+  };
+
+  document.getElementById("bundled").onclick = async () => {
+    const r = await fetch("./firmware.hex");
+    if (!r.ok) return log("✗ no bundled firmware.hex");
+    hexText = await r.text();
+    log(`loaded bundled firmware.hex — ${hexText.length.toLocaleString()} bytes`); setReady();
+  };
+
+  document.getElementById("parse").onclick = () => {
+    try {
+      const t0 = performance.now();
+      const img = parseIntelHex(hexText, TEENSY41.codeSize, TEENSY41.flashBase);
+      const blocks = Math.ceil(img.length / TEENSY41.blockSize);
+      log(`✓ parsed in ${(performance.now() - t0).toFixed(0)}ms`);
+      log(`  image length : ${img.length.toLocaleString()} bytes`);
+      log(`  blocks       : ${blocks} × ${TEENSY41.blockSize}`);
+      log(`  flashBase    : 0x${TEENSY41.flashBase.toString(16)} (subtracted)`);
+      log(`  first bytes  : ${[...img.data.slice(0,8)].map(b=>b.toString(16).padStart(2,"0")).join(" ")}`);
+      log(`  est. time    : ~${(3 + blocks*0.005).toFixed(1)}s`);
+    } catch (err) { log("✗ " + err.message); }
+  };
+
+  document.getElementById("connect").onclick = async () => {
+    try {
+      await transport.open();
+      log(`✓ connected: ${transport.label}`);
+      setReady();
+    } catch (err) {
+      log("✗ " + err.message);
+      log("  (filter is vid=0x" + PJRC_VENDOR_ID.toString(16) +
+          " pid=0x" + HALFKAY_PRODUCT_ID.toString(16) + " — if the picker is empty,");
+      log("   the board is not in bootloader mode. Hold Program while plugging in.)");
+    }
+  };
+
+  document.getElementById("flash").onclick = async () => {
+    if (!confirm("Overwrite the firmware on the connected Teensy?")) return;
+    const t0 = performance.now();
+    try {
+      await flashHex(transport, hexText, (p) => {
+        bar.max = p.total || 1; bar.value = p.written;
+        if (p.phase === "erasing") log("→ erasing chip (first block, ~3s)…");
+        if (p.phase === "rebooting") log("→ all blocks written, starting application…");
+        if (p.phase === "writing" && p.written % 50 === 0)
+          log(`  ${p.written}/${p.total} blocks`);
+      });
+      log(`✓✓ FLASHED in ${((performance.now()-t0)/1000).toFixed(1)}s — the board should`);
+      log("   now be running the new firmware and have re-enumerated.");
+    } catch (err) { log("✗ " + err.message); }
+  };
+</script>

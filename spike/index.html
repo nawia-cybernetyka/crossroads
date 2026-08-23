@@ -1,0 +1,105 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Nawia — reboot &amp; reclaim spike</title>
+<style>
+  body { font: 15px/1.5 system-ui, sans-serif; max-width: 42rem; margin: 3rem auto; padding: 0 1rem; }
+  button { font: inherit; padding: .5rem 1rem; margin-right: .5rem; }
+  #log { background: #111; color: #b8e; padding: 1rem; white-space: pre-wrap;
+         font-family: ui-monospace, monospace; font-size: 13px; border-radius: 6px; min-height: 12rem; }
+  .warn { color: #c60; }
+</style>
+
+<h1>Reboot &amp; reclaim spike</h1>
+
+<p><strong>Status 2026-08-22: step 1 PASSED</strong> — Chrome claimed HalfKay at
+0x16C0/0x0478 on a real Teensy 4.1. Browser flashing is viable.</p>
+
+<p>This answers ONE question before any real work is built on top of it:
+<strong>can a web page follow a Teensy 4.1 across the re-enumeration from running
+firmware into the HalfKay bootloader?</strong> Everything else in the browser
+plan is ordinary; this is the part that might not work.</p>
+
+<p class="warn">Chrome or Edge only. Safari and Firefox have no WebHID.</p>
+
+<ol>
+  <li><strong>Baseline</strong> — hold the recessed bootloader button (or the
+      Teensy's onboard Program button) so the board comes up as HalfKay, then
+      click Connect. If this fails, nothing else is worth trying.</li>
+  <li><strong>The real test</strong> — with normal firmware running, click
+      Connect, then Reboot, and see whether Reclaim finds the bootloader without
+      a second permission prompt.</li>
+</ol>
+
+<p>
+  <button id="connect">1. Connect</button>
+  <button id="reboot">2. Reboot to bootloader</button>
+  <button id="reclaim">3. Reclaim</button>
+  <button id="list">List granted devices</button>
+</p>
+
+<div id="log">ready.</div>
+
+<script type="module">
+  const VENDOR_ID = 0x16c0;
+  const HALFKAY_PID = 0x0478;   // ⚠ unverified — confirm against a real board
+  const el = document.getElementById("log");
+  const log = (...a) => { el.textContent += "\n" + a.join(" "); };
+
+  let device = null;
+
+  if (!("hid" in navigator)) log("✗ no WebHID in this browser — use Chrome or Edge.");
+  else log("✓ WebHID available.");
+
+  document.getElementById("connect").onclick = async () => {
+    try {
+      const [d] = await navigator.hid.requestDevice({ filters: [{ vendorId: VENDOR_ID }] });
+      if (!d) return log("cancelled.");
+      device = d;
+      if (!d.opened) await d.open();
+      log(`✓ opened: ${d.productName}  vid=0x${d.vendorId.toString(16)} pid=0x${d.productId.toString(16)}`);
+      log(d.productId === HALFKAY_PID
+        ? "  → this IS the bootloader. Flashing would work from here."
+        : "  → this is NOT the bootloader (running firmware). Try Reboot next.");
+    } catch (e) { log("✗ " + e.message); }
+  };
+
+  // ⚠ THIS ONLY WORKS ON A DEVICE ALREADY IN THE BOOTLOADER.
+  // 0xFFFFFF means "jump to the application" — it is how you LEAVE HalfKay, not
+  // how you enter it. Sending it to running firmware (as happened on 2026-08-22)
+  // does nothing: the firmware sees an unrecognised HID report and ignores it.
+  // Kept as a live-fire test that we can drive HalfKay at all; the real
+  // firmware-to-bootloader trigger is still to be identified.
+  document.getElementById("reboot").onclick = async () => {
+    if (!device) return log("connect first.");
+    try {
+      const packet = new Uint8Array(64 + 1024);
+      packet[0] = 0xff; packet[1] = 0xff; packet[2] = 0xff;
+      await device.sendReport(0, packet);
+      log("→ reboot packet sent; device should re-enumerate.");
+    } catch (e) { log("✗ " + e.message + "  (expected if this is not HalfKay)"); }
+  };
+
+  document.getElementById("reclaim").onclick = async () => {
+    log("polling for the bootloader for 10s…");
+    const deadline = Date.now() + 10000;
+    while (Date.now() < deadline) {
+      const found = (await navigator.hid.getDevices())
+        .find(d => d.vendorId === VENDOR_ID && d.productId === HALFKAY_PID);
+      if (found) {
+        if (!found.opened) await found.open();
+        log("✓✓ RECLAIMED without a new prompt — the browser route works end to end.");
+        return;
+      }
+      await new Promise(r => setTimeout(r, 250));
+    }
+    log("✗ not found. Either the reboot did not happen, or the bootloader is a");
+    log("  separate device the customer has not granted access to. If it is the");
+    log("  latter, the flow needs a second prompt — or just use the recessed button.");
+  };
+
+  document.getElementById("list").onclick = async () => {
+    const ds = await navigator.hid.getDevices();
+    log(ds.length ? ds.map(d => `  ${d.productName} pid=0x${d.productId.toString(16)}`).join("\n")
+                  : "  (none granted yet)");
+  };
+</script>

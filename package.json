@@ -1,0 +1,16 @@
+{
+  "name": "nawia-updater",
+  "version": "0.0.1",
+  "description": "Firmware updater and song transfer for Nawia Cybernetyka pedals (Moerae, Leshy)",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "//spike": "No Node needed \u2014 the spike page is plain ES modules.",
+    "spike": "python3 -m http.server 8080"
+  },
+  "devDependencies": {
+    "@types/w3c-web-hid": "^1.0.6",
+    "typescript": "^5.6.0"
+  }
+}
