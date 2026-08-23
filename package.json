@@ -1,7 +1,7 @@
 {
-  "name": "nawia-updater",
+  "name": "styx",
   "version": "0.0.1",
-  "description": "Firmware updater and song transfer for Nawia Cybernetyka pedals (Moerae, Leshy)",
+  "description": "Styx \u2014 firmware updater and card manager for Nawia Cybernetyka pedals (Moerae, Leshy, Rusalka)",
   "license": "MIT",
   "type": "module",
   "scripts": {

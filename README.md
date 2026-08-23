@@ -1,7 +1,11 @@
-# nawia-updater
+# Styx
 
-Firmware updater and song transfer for [Nawia Cybernetyka](https://nawiacybernetyka.com)
-pedals — **Mœræ** (model FATES) and **Leshy**.
+**Styx** is the tool that updates and manages [Nawia Cybernetyka](https://nawiacybernetyka.com)
+pedals — **Mœræ** (model FATES), **Leshy** and **Rusalka** — from a PC or Mac.
+
+Named for the river you cross into the underworld, which is roughly what it does:
+carries firmware over to the device. It runs in the browser today; a native app
+may follow.
 
 Two jobs: **update firmware**, and **prepare the card** — transferring songs and
 editing the setlist, which is drag-and-drop on a screen and miserable on a pedal.

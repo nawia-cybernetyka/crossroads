@@ -2,7 +2,7 @@
 
 Run it (Node is not installed on this machine; the page is plain ES modules):
 
-    cd ~/nawia-updater && python3 -m http.server 8080
+    cd ~/styx && python3 -m http.server 8080
     # then open http://localhost:8080/spike/ in Chrome or Edge
 
 WebHID requires a secure context — `localhost` counts, so no TLS setup needed.
