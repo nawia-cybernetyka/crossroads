@@ -57,7 +57,9 @@ Two routes, and the app should offer both:
       core (`usb.c`): setting the CDC line coding to 134 baud arms an ~80 ms timer
       that calls `_reboot_Teensyduino_()`.** Reachable from Web Serial as
       `port.open({ baudRate: 134 })`. HalfKay's `0xFFFFFF` was the wrong direction
-      (it LEAVES the bootloader). Untested from a browser — `spike/reboot.html`.
+      (it LEAVES the bootloader). Proven on the pedal via
+      PlatformIO's upload (same mechanism), 2026-10-19/20 — works most of the
+      time, failed occasionally. Untested from a browser — `spike/reboot.html`.
       The recessed button stays the recovery route.
 - [ ] Does a WebHID permission granted for the *serial* identity carry over to
       the *bootloader* identity? Untested — the reboot never happened, so this

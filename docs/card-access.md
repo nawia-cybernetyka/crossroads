@@ -41,9 +41,15 @@ macOS has no MTP, which is why the tool exists at all (see the README).
   into HalfKay when the host sets the serial port's line coding to **134 baud**
   (`usb.c`, `usb_cdc_line_coding[0] == 134` → `_reboot_Teensyduino_()` after
   ~80 ms). Web Serial can do that: `port.open({ baudRate: 134 })`. 134 is a
-  standard POSIX rate, so macOS accepts it. ⚠ Not yet tried from a browser —
-  `spike/reboot.html` exists to try it. The recessed BOOT pinhole stays the
-  documented recovery path either way.
+  standard POSIX rate, so macOS accepts it. **The mechanism is proven on the
+  pedal:** PlatformIO's upload (the Teensy Loader, which sends exactly this)
+  rebooted a running Mœræ into HalfKay through the panel port during the
+  2026-10-19/20 bench sessions — *most* of the time. It failed occasionally and
+  needed the button. ⚠ Not yet tried from a browser — `spike/reboot.html`
+  exists to try it. Two consequences: the recessed BOOT pinhole stays the
+  documented recovery path, and **the update flow must expect the soft reboot
+  to fail sometimes** — if HalfKay has not appeared within a few seconds, show
+  the pinhole instruction rather than an error.
 
 ## The protocol
 
@@ -149,6 +155,11 @@ error words above are the hooks for those sentences.
 
 - [ ] Try `spike/reboot.html` on a pedal: does Chrome's 134-baud open reboot it
       into HalfKay, and can the same page then claim the bootloader over WebHID?
+      (The mechanism itself is proven via PlatformIO; this tests the browser.)
+- [ ] Why does the soft reboot occasionally fail from PlatformIO? If it is the
+      ~80 ms timer racing the port close, the browser page can hold the port
+      open longer before closing; if it is the pedal's firmware being busy, it
+      is the firmware's problem.
 - [ ] Measure `@put` throughput over the Teensy's CDC (480 Mbit USB, SPI card at
       8 MHz): is chunked acknowledgement needed, or does one `+go` suffice?
 - [ ] Does a Web Serial port permission survive the re-enumeration after an
