@@ -71,8 +71,9 @@ and swaps one file.
 | `src/verify.js` | SHA-256 + Ed25519 checks, rollback guard |
 | `src/devices.js` | Product table — the only place product facts live |
 | `src/keys.js` | Shipped **public** key (placeholder) |
-| `spike/` | Reboot-and-reclaim experiment |
+| `spike/` | Bench pages: flash test, reboot-and-reclaim, 134-baud soft reboot |
 | `docs/protocol.md` | Device protocol notes and open questions |
+| `docs/card-access.md` | How the tool reaches the cards: through the pedal over USB, and the `@` file protocol |
 | `docs/setlist-editor.md` | Setlist editor concept — the app's second job |
 | `docs/ux.md` | UI is unbuilt; the spike pages are bench tools, not the product |
 
@@ -98,4 +99,5 @@ Pedal firmware source. Only signed `.hex` builds are published.
 - [ ] USB product string — **Leshy**, when its firmware starts; Rusalka needs its own mechanism
 - [ ] Generate the signing keypair; replace the placeholder public key
 - [ ] Stand up the manifest endpoint on the Cloudflare Worker
-- [ ] Decide the file-transfer protocol for Mœræ
+- [x] ~~Decide the file-transfer protocol for Mœræ~~ — `docs/card-access.md`, 2026-10-20
+- [ ] Build it: firmware `@` commands, `src/transport/webserial.js`, `src/cardfs.js`

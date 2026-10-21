@@ -64,6 +64,13 @@ required on every BOM.
 A working soft reboot would remove that one manual step. Worth having, not worth
 blocking on.
 
+## Soft reboot — `reboot.html` (added 2026-10-20, untested)
+
+The Teensy 4 core reboots into HalfKay when the serial port is opened at
+**134 baud**. `reboot.html` does that with Web Serial and then tries to claim the
+bootloader over WebHID. Pedal running normal firmware, nothing held. Three
+buttons, each one question.
+
 ## Next
 
 1. Identify how Teensyduino triggers reboot-into-HalfKay from running firmware,

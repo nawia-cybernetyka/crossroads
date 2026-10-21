@@ -24,9 +24,12 @@ Two jobs, from the customer's side:
   not fail at the connect step. A Safari user needs to know in the first sentence.
 - **A visible Connect button every session** is unavoidable — the browser will not
   enumerate devices without a user gesture. Design with it, not around it.
-- **The recessed bootloader button is currently part of the flow.** Until a
-  soft-reboot path exists, the customer holds it while plugging in. That is one
-  sentence in the UI, but it has to be the right sentence, with a picture.
+- **The recessed bootloader button is the RECOVERY path, probably not the
+  routine one.** The Teensy core reboots into the bootloader when the port is
+  opened at 134 baud (see `docs/card-access.md`); if that holds up from Chrome,
+  the customer never touches the pinhole unless an update fails. The pinhole
+  sentence still has to be the right sentence, with a picture, on the failure
+  screen.
 - **Card-to-card copy and per-file overwrite** belong here rather than on the
   pedal, because a real screen affords them — see `setlist-editor.md`.
 - **Stakes are high and the audience is not technical.** This writes firmware to

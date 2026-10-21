@@ -1,0 +1,112 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Nawia — soft reboot spike</title>
+<style>
+  body { font: 15px/1.5 system-ui, sans-serif; max-width: 42rem; margin: 3rem auto; padding: 0 1rem; }
+  button { font: inherit; padding: .5rem 1rem; margin-right: .5rem; }
+  #log { background: #111; color: #b8e; padding: 1rem; white-space: pre-wrap;
+         font-family: ui-monospace, monospace; font-size: 13px; border-radius: 6px; min-height: 12rem; }
+  .warn { color: #c60; }
+</style>
+
+<h1>Soft reboot spike — 134 baud</h1>
+
+<p>The Teensy 4 core reboots into the HalfKay bootloader when the host opens its
+USB serial port at <strong>134 baud</strong> (that is how the Teensy Loader does
+it). This page asks one question: <strong>can a web page do that with Web Serial,
+and then claim the bootloader over WebHID?</strong> If yes, most firmware updates
+need no recessed button.</p>
+
+<p class="warn">Chrome or Edge only. Pedal running normal firmware, nothing held.</p>
+
+<ol>
+  <li><strong>Identify</strong> — pick the pedal's serial port, read its
+      <code>?</code> identity line. Proves the port is the pedal.</li>
+  <li><strong>Reboot</strong> — re-open the same port at 134 baud. The board
+      should drop off the bus within ~100 ms and come back as HalfKay.</li>
+  <li><strong>Claim</strong> — request the HalfKay HID device. A second
+      permission prompt here is acceptable; failure to find it is not.</li>
+</ol>
+
+<p>
+  <button id="identify">1. Identify</button>
+  <button id="reboot">2. Reboot (134 baud)</button>
+  <button id="claim">3. Claim HalfKay</button>
+</p>
+
+<div id="log">ready.</div>
+
+<script type="module">
+  import { PJRC_VENDOR_ID, HALFKAY_PRODUCT_ID } from "../src/devices.js";
+
+  const out = document.getElementById("log");
+  const log = (s) => { out.textContent += "\n" + s; };
+  const t0 = performance.now();
+  const stamp = () => `[${((performance.now() - t0) / 1000).toFixed(2)}s]`;
+
+  let port = null;
+
+  async function readLineFor(ms) {
+    // Read whatever the pedal prints within `ms`, as text.
+    const reader = port.readable.getReader();
+    const dec = new TextDecoder();
+    let text = "";
+    const timer = setTimeout(() => reader.cancel(), ms);
+    try {
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        text += dec.decode(value, { stream: true });
+      }
+    } finally { clearTimeout(timer); reader.releaseLock(); }
+    return text;
+  }
+
+  document.getElementById("identify").onclick = async () => {
+    try {
+      if (!("serial" in navigator)) throw new Error("No Web Serial — use Chrome or Edge.");
+      port = await navigator.serial.requestPort({ filters: [{ usbVendorId: PJRC_VENDOR_ID }] });
+      const info = port.getInfo();
+      log(`${stamp()} port vid=0x${info.usbVendorId?.toString(16)} pid=0x${info.usbProductId?.toString(16)}`);
+      await port.open({ baudRate: 115200 });
+      const w = port.writable.getWriter();
+      await w.write(new TextEncoder().encode("?"));
+      w.releaseLock();
+      const reply = await readLineFor(400);
+      log(`${stamp()} pedal says:\n${reply.trim() || "(nothing — is this the pedal?)"}`);
+      await port.close();
+      log(`${stamp()} port closed; ready for step 2.`);
+    } catch (e) { log(`${stamp()} FAIL identify: ${e.message}`); }
+  };
+
+  document.getElementById("reboot").onclick = async () => {
+    try {
+      if (!port) throw new Error("Identify first.");
+      log(`${stamp()} opening at 134 baud…`);
+      await port.open({ baudRate: 134 });
+      // The core arms an ~80 ms timer on the line-coding request and then
+      // reboots; the port disappears underneath us. Close it ourselves first
+      // so Chrome does not report the disconnect as an error.
+      await new Promise((r) => setTimeout(r, 50));
+      try { await port.close(); } catch (e) { log(`${stamp()} close after reboot: ${e.message} (expected if it already left)`); }
+      log(`${stamp()} sent. Watch the pedal: it should re-enumerate as HalfKay. Then step 3.`);
+      navigator.serial.addEventListener("disconnect", (ev) => {
+        if (ev.target === port) log(`${stamp()} serial port DISCONNECTED — the board left the bus.`);
+      }, { once: true });
+    } catch (e) { log(`${stamp()} FAIL reboot: ${e.message}`); }
+  };
+
+  document.getElementById("claim").onclick = async () => {
+    try {
+      if (!("hid" in navigator)) throw new Error("No WebHID — use Chrome or Edge.");
+      const devices = await navigator.hid.requestDevice({
+        filters: [{ vendorId: PJRC_VENDOR_ID, productId: HALFKAY_PRODUCT_ID }],
+      });
+      if (!devices.length) throw new Error("no HalfKay device chosen — did the pedal reboot?");
+      const d = devices[0];
+      await d.open();
+      log(`${stamp()} PASS: claimed HalfKay (pid 0x${d.productId.toString(16)}). Soft reboot from a browser works.`);
+      await d.close();
+    } catch (e) { log(`${stamp()} FAIL claim: ${e.message}`); }
+  };
+</script>

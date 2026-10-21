@@ -53,16 +53,17 @@ Two routes, and the app should offer both:
 - [x] ~~Confirm block size 1024 / data offset 64~~ — **verified 2026-08-22** by
       flashing a 110-block Fates build end to end in 3.7s; confirmed via the USB
       identity change 0x0478 → 0x0483, not from the flasher's own report.
-- [ ] **Find the real soft-reboot mechanism.** HalfKay's `0xFFFFFF` write means
-      "jump to the application" and only works on a device ALREADY in the
-      bootloader — it is the wrong direction. Getting from running firmware INTO
-      HalfKay uses a Teensyduino side-channel that still needs identifying, and
-      whatever it is must be reachable from a browser (WebHID or WebSerial) or
-      the soft path is dead and the recessed button becomes the only route.
+- [x] ~~**Find the real soft-reboot mechanism.**~~ **FOUND 2026-10-20 in the Teensy 4
+      core (`usb.c`): setting the CDC line coding to 134 baud arms an ~80 ms timer
+      that calls `_reboot_Teensyduino_()`.** Reachable from Web Serial as
+      `port.open({ baudRate: 134 })`. HalfKay's `0xFFFFFF` was the wrong direction
+      (it LEAVES the bootloader). Untested from a browser — `spike/reboot.html`.
+      The recessed button stays the recovery route.
 - [ ] Does a WebHID permission granted for the *serial* identity carry over to
       the *bootloader* identity? Untested — the reboot never happened, so this
       was never actually exercised.
-- [ ] Decide the file-transfer protocol over USB Serial (Mœræ only).
+- [x] ~~Decide the file-transfer protocol over USB Serial (Mœræ only).~~ Decided
+      2026-10-20: through the pedal, `@`-prefixed line protocol — `docs/card-access.md`.
 - [ ] Confirm Seed3 DFU entry: is it BOOT+RESET, or single-button?
 - [ ] Write the DFU protocol module (`src/dfu.ts`) against `ControlTransport`.
 - [ ] Write the WebUSB backend (`src/transport/webusb.ts`) for Rusalka.

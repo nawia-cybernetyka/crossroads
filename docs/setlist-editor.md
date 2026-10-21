@@ -58,8 +58,9 @@ so app and firmware cannot drift apart.
 
 ## Open
 
-- [ ] Design the file-transfer protocol over USB Serial — bidirectional: list,
-      read, write, delete.
+- [x] ~~Design the file-transfer protocol over USB Serial~~ — `docs/card-access.md`
+      (2026-10-20): through the pedal, bidirectional, with a card reader as an
+      optional second source for the external card later.
 - [ ] Decide whether to parse SMF in the browser for durations, or skip it.
 - [ ] Does the pedal need to re-read `setlist.txt` without a power cycle?
 
