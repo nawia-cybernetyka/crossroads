@@ -1,11 +1,13 @@
-# Styx
+# Nawia Crossroads Utility
 
-**Styx** is the tool that updates and manages [Nawia Cybernetyka](https://nawiacybernetyka.com)
+The **Nawia Crossroads Utility** — **Crossroads**, once introduced — is the tool
+that updates and manages [Nawia Cybernetyka](https://nawiacybernetyka.com)
 pedals — **Mœræ** (model FATES), **Leshy** and **Rusalka** — from a PC or Mac.
 
-Named for the river you cross into the underworld, which is roughly what it does:
-carries firmware over to the device. It runs in the browser today; a native app
-may follow.
+Named for the crossroads: in Slavic folklore the place where the worlds meet, and
+in the blues the place a musician goes to make a deal. Here it is where the
+computer, the pedal's cards and its firmware meet. It runs in the browser today;
+a native app may follow. (Until 2026-10-20 this repo was called *Styx*.)
 
 Two jobs: **update firmware**, and **prepare the card** — transferring songs and
 editing the setlist, which is drag-and-drop on a screen and miserable on a pedal.
@@ -39,13 +41,14 @@ later without a rewrite — see the seam below.
 
 ## The seam
 
-Everything device-facing takes a [`Transport`](src/transport/transport.ts) and
+Everything device-facing takes a `Transport` (today the shape of
+[`WebHidTransport`](src/transport/webhid.js)) and
 knows nothing about how bytes reach the pedal:
 
     ┌─────────────────────────────────────────┐
     │  UI                                     │
     ├─────────────────────────────────────────┤
-    │  halfkay.ts · ihex.ts · verify.ts       │  ← portable, no I/O
+    │  halfkay.js · ihex.js · verify.js       │  ← portable, no I/O
     ├─────────────────────────────────────────┤
     │  Transport (interface)                  │  ← the seam
     ├──────────────────────┬──────────────────┤
@@ -53,20 +56,21 @@ knows nothing about how bytes reach the pedal:
     │  WebUSB (Daisy/DFU)  │  hidapi, Tauri   │
     └──────────────────────┴──────────────────┘
 
-A native build reuses the same TypeScript UI and core and swaps one file.
+A native build reuses the same UI and core (plain JS + JSDoc, no build step)
+and swaps one file.
 
 ## Layout
 
 | Path | What |
 |---|---|
-| `src/transport/transport.ts` | The interface every backend implements |
-| `src/transport/webhid.ts` | Browser backend (Chrome/Edge) |
-| `src/halfkay.ts` | Teensy bootloader protocol, reimplemented (MIT, not GPL) |
-| `src/dfu.ts` | *(to write)* STM32 DFU, for Rusalka |
-| `src/ihex.ts` | Intel HEX parser |
-| `src/verify.ts` | SHA-256 + Ed25519 checks, rollback guard |
-| `src/devices.ts` | Product table — the only place product facts live |
-| `src/keys.ts` | Shipped **public** key (placeholder) |
+| `src/transport/` | One backend per way of reaching a pedal; each exposes the same `Transport` shape |
+| `src/transport/webhid.js` | Browser backend (Chrome/Edge) |
+| `src/halfkay.js` | Teensy bootloader protocol, reimplemented (MIT, not GPL) |
+| `src/dfu.js` | *(to write)* STM32 DFU, for Rusalka |
+| `src/ihex.js` | Intel HEX parser |
+| `src/verify.js` | SHA-256 + Ed25519 checks, rollback guard |
+| `src/devices.js` | Product table — the only place product facts live |
+| `src/keys.js` | Shipped **public** key (placeholder) |
 | `spike/` | Reboot-and-reclaim experiment |
 | `docs/protocol.md` | Device protocol notes and open questions |
 | `docs/setlist-editor.md` | Setlist editor concept — the app's second job |
@@ -75,7 +79,7 @@ A native build reuses the same TypeScript UI and core and swaps one file.
 ## Security model
 
 Downloads are signed with an Ed25519 key held **offline**; the public half
-ships in `src/keys.ts`. TLS protects the connection, but a signature is what
+ships in `src/keys.js`. TLS protects the connection, but a signature is what
 protects the customer if the server itself is compromised. The manifest carries
 a monotonic `sequence` so an old, validly-signed release list cannot be replayed
 to push someone back onto a buggy version.

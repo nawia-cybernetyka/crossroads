@@ -4,7 +4,7 @@ dist/
 *.log
 
 # ─── NEVER COMMIT ─────────────────────────────────────────────────────────
-# The firmware SIGNING PRIVATE KEY. The public key belongs in src/keys.ts and
+# The firmware SIGNING PRIVATE KEY. The public key belongs in src/keys.js and
 # is meant to ship; the private key signs releases and must live offline, not
 # in this repo and not in CI.
 *.key

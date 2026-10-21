@@ -1,7 +1,7 @@
 {
-  "name": "styx",
+  "name": "crossroads",
   "version": "0.0.1",
-  "description": "Styx \u2014 firmware updater and card manager for Nawia Cybernetyka pedals (Moerae, Leshy, Rusalka)",
+  "description": "Nawia Crossroads Utility \u2014 firmware updater and card manager for Nawia Cybernetyka pedals (Moerae, Leshy, Rusalka)",
   "license": "MIT",
   "type": "module",
   "scripts": {
