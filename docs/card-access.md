@@ -108,7 +108,7 @@ before the `.` (or the single `+`/`-`) of the previous one.
 
 | Command | Reply | Notes |
 |---|---|---|
-| `@hello` | `+hello product=Moerae model=FATES hw=FATES00 firmware=0.1.0 proto=1 cards=int,ext` | Same fields as `?`'s first line, plus the protocol version and which card slots exist. **`hw=` is the hardware gate** — the tool refuses a firmware file built for other hardware. |
+| `@hello` | `+hello product=Moerae model=FATES hw=FATES00 firmware=0.1.0 proto=1 cards=int,ext` | Same fields as `?`'s first line, plus the protocol version and which card slots exist. **`hw=` is the hardware gate** — the tool refuses a firmware file built for other hardware. The firmware prints `hw=FATES00` on `?` since the 2026-10-22 build. |
 | `@cards` | `+card int mounted` / `+card ext absent` … `.` | Mount state right now; the external slot is probed first. |
 | `@ls <card> <path>` | `+d <name>` / `+f <size> <name>` … `.` | One level. `<path>` is `/` or a folder. |
 | `@get <card> <path>` | `+data <n>` then `n` raw bytes, then `+crc <hex8>` | Host checks the CRC before trusting the bytes. |

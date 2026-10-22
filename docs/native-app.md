@@ -56,7 +56,7 @@ Edits to `src/` need a re-sync (`npm run sync`, or restart `npm run dev`).
    read its identity, parse a `.hex`, reboot, claim, flash, confirm. Bench UI.
    ← here.
 2. **Hardware gate**: refuse a file whose `hw=` does not match the pedal's
-   (needs the firmware's `?` line to carry `hw=` first).
+   (the firmware's `?` line carries `hw=FATES00` from the 2026-10-22 build on).
 3. **The real UI** (`docs/ux.md`): one screen, one button, plain words.
 4. **Signed manifest** from nawiacybernetyka.com (`src/verify.js`).
 5. **Card management** over the `@` protocol (`docs/card-access.md`).
