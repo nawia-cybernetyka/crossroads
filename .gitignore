@@ -18,3 +18,8 @@ wrangler.toml.local
 
 # Firmware binaries are published from the release pipeline, not committed here
 *.hex
+
+# Native app: app/src is a copy of src/ made by `npm run sync`; Rust build output
+app/src/
+src-tauri/target/
+src-tauri/gen/schemas/

@@ -57,8 +57,10 @@ knows nothing about how bytes reach the pedal:
     ├─────────────────────────────────────────┤
     │  Transport (interface)                  │  ← the seam
     ├──────────────────────┬──────────────────┤
-    │  WebHID (Teensy)     │  (future) Rust   │
-    │  WebUSB (Daisy/DFU)  │  hidapi, Tauri   │
+    │  WebHID (Teensy)     │  Rust: hidapi +  │
+    │  WebUSB (Daisy/DFU)  │  serialport      │
+    │  (bench / fallback)  │  (Tauri — the    │
+    │                      │   customer app)  │
     └──────────────────────┴──────────────────┘
 
 A native build reuses the same UI and core (plain JS + JSDoc, no build step)
@@ -69,7 +71,10 @@ and swaps one file.
 | Path | What |
 |---|---|
 | `src/transport/` | One backend per way of reaching a pedal; each exposes the same `Transport` shape |
-| `src/transport/webhid.js` | Browser backend (Chrome/Edge) |
+| `src/transport/webhid.js` | Browser backend (Chrome/Edge) — bench and fallback |
+| `src/transport/tauri.js` | Native backend: wraps the Rust commands in the same shape |
+| `src-tauri/` | The native app's Rust shell (`src/lib.rs` = the device commands) |
+| `app/` | The page the native window shows; `app/src/` is a synced copy of `src/` |
 | `src/halfkay.js` | Teensy bootloader protocol, reimplemented (MIT, not GPL) |
 | `src/dfu.js` | *(to write)* STM32 DFU, for Rusalka |
 | `src/ihex.js` | Intel HEX parser |
@@ -78,6 +83,7 @@ and swaps one file.
 | `src/keys.js` | Shipped **public** key (placeholder) |
 | `spike/` | Bench pages: flash test, reboot-and-reclaim, 134-baud soft reboot |
 | `docs/protocol.md` | Device protocol notes and open questions |
+| `docs/native-app.md` | Why native, the shape, how to run it, milestones |
 | `docs/card-access.md` | How the tool reaches the cards: through the pedal over USB, and the `@` file protocol |
 | `docs/setlist-editor.md` | Setlist editor concept — the app's second job |
 | `docs/ux.md` | UI is unbuilt; the spike pages are bench tools, not the product |
@@ -105,4 +111,5 @@ Pedal firmware source. Only signed `.hex` builds are published.
 - [ ] Generate the signing keypair; replace the placeholder public key
 - [ ] Stand up the manifest endpoint on the Cloudflare Worker
 - [x] ~~Decide the file-transfer protocol for Mœræ~~ — `docs/card-access.md`, 2026-10-20
-- [ ] Build it: firmware `@` commands, `src/transport/webserial.js`, `src/cardfs.js`
+- [ ] Build it: firmware `@` commands, `src/cardfs.js` over `serial.query`
+- [ ] Native app milestones — `docs/native-app.md`

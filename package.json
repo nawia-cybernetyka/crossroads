@@ -1,15 +1,19 @@
 {
   "name": "crossroads",
   "version": "0.0.1",
-  "description": "Nawia Crossroads Utility \u2014 firmware updater and card manager for Nawia Cybernetyka pedals (Moerae, Leshy, Rusalka)",
+  "description": "Nawia Crossroads Utility — firmware updater and card manager for Nawia Cybernetyka pedals (Moerae, Leshy, Rusalka)",
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "sync": "rm -rf app/src && cp -R src app/src",
+    "dev": "tauri dev",
+    "build": "tauri build",
     "typecheck": "tsc --noEmit",
-    "//spike": "No Node needed \u2014 the spike page is plain ES modules.",
+    "//spike": "No Node needed for the spike pages — plain ES modules.",
     "spike": "python3 -m http.server 8080"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.12.4",
     "@types/w3c-web-hid": "^1.0.6",
     "typescript": "^5.6.0"
   }

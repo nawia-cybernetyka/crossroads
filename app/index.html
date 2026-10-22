@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Nawia Crossroads Utility</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 15px/1.5 system-ui, sans-serif; max-width: 44rem; margin: 2rem auto; padding: 0 1rem; }
+  h1 { font-size: 1.3rem; margin: 0 0 .25rem; }
+  .sub { opacity: .7; margin: 0 0 1.5rem; }
+  section { border: 1px solid color-mix(in srgb, currentColor 20%, transparent); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+  section h2 { font-size: 1rem; margin: 0 0 .5rem; }
+  button { font: inherit; padding: .45rem .9rem; margin: 0 .4rem .4rem 0; }
+  button:disabled { opacity: .5; }
+  progress { width: 100%; height: 1rem; }
+  #log { background: #111; color: #cfd8e3; padding: .8rem; white-space: pre-wrap; font-family: ui-monospace, monospace;
+         font-size: 12.5px; border-radius: 6px; min-height: 10rem; max-height: 22rem; overflow: auto; }
+  .ok { color: #7c6; } .bad { color: #e76; }
+  code { font-family: ui-monospace, monospace; }
+</style>
+
+<h1>Nawia Crossroads Utility</h1>
+<p class="sub">Milestone 1 — native transport. Bench build, not the customer UI yet.</p>
+
+<section>
+  <h2>1. Pedal</h2>
+  <p><button id="refresh">Find pedals</button> <select id="ports"></select> <button id="identify" disabled>Identify</button></p>
+  <p id="identity"></p>
+</section>
+
+<section>
+  <h2>2. Firmware</h2>
+  <p><input type="file" id="file" accept=".hex"> <span id="fileinfo"></span></p>
+</section>
+
+<section>
+  <h2>3. Update</h2>
+  <p>
+    <button id="update" disabled>Update (reboot → claim → flash)</button>
+    <button id="pinhole" disabled>Flash a pedal already in the bootloader</button>
+  </p>
+  <progress id="bar" value="0" max="1"></progress>
+  <p id="status"></p>
+</section>
+
+<div id="log">ready.</div>
+
+<script type="module" src="./app.js"></script>
+</html>
