@@ -22,9 +22,9 @@ need no recessed button.</p>
 <ol>
   <li><strong>Identify</strong> — pick the pedal's serial port, read its
       <code>?</code> identity line. Proves the port is the pedal.</li>
-  <li><strong>Reboot + claim</strong> — re-opens the port at 134 baud, waits
-      for it to vanish, then claims HalfKay <em>immediately</em>. If a picker
-      appears, <strong>click the device at once</strong>: the bootloader runs
+  <li><strong>Reboot + claim</strong> — opens Chrome's device picker first, then
+      re-opens the port at 134 baud. The pedal appears in the picker about a
+      third of a second later — <strong>click it at once</strong>: the bootloader runs
       the firmware again by itself after a few seconds if nobody claims it
       (found 2026-10-21). The page then holds the device for 8 s and reports
       whether the bootloader stayed.</li>
@@ -89,9 +89,9 @@ need no recessed button.</p>
   // now whether a browser can claim HalfKay INSIDE that window, and whether
   // claiming it makes the bootloader stay. This handler does the whole chain in
   // one click (Chrome's user-gesture budget is ~5 s):
-  //   1. open at 134 baud, wait for the serial port to vanish;
-  //   2. poll getDevices() — if Chrome remembered a HalfKay grant, no picker;
-  //   3. otherwise open the picker immediately — CLICK FAST;
+  //   1. open the WebHID picker (it consumes the click and lists live);
+  //   2. open at 134 baud, wait for the serial port to vanish;
+  //   3. the customer clicks HalfKay in the picker as it appears — CLICK FAST;
   //   4. open the device and hold it for 8 s, then report whether it is still
   //      open and whether the serial port came back (= bootloader gave up).
   document.getElementById("reboot").onclick = async () => {
@@ -101,30 +101,30 @@ need no recessed button.</p>
       const gone = new Promise((r) => navigator.serial.addEventListener("disconnect", (ev) => {
         if (ev.target === port) r(performance.now() - tReboot);
       }, { once: true }));
-      log(`${stamp()} opening at 134 baud…`);
+      // PICKER FIRST, then the reboot (2026-10-21, second run: polling for a
+      // remembered grant before opening the picker burned 2 s of the ~3 s
+      // window and the click came too late). requestDevice() opens Chrome's
+      // chooser immediately and the chooser's list updates LIVE, so HalfKay
+      // appears in it ~0.3 s after the reboot and the whole window is the
+      // customer's. The promise is left pending while we send the reboot.
+      const picked = navigator.hid.requestDevice({
+        filters: [{ vendorId: PJRC_VENDOR_ID, productId: HALFKAY_PRODUCT_ID }],
+      });
+      // If Chrome remembered a grant for HalfKay it fires `connect` when the
+      // device appears, picker or no picker. Log it: that is the no-picker path.
+      navigator.hid.addEventListener("connect", (ev) => {
+        if (ev.device.productId === HALFKAY_PRODUCT_ID)
+          log(`${stamp()} HID connect event: Chrome REMEMBERED a HalfKay grant (+${(performance.now() - tReboot).toFixed(0)} ms)`);
+      }, { once: true });
+      log(`${stamp()} picker open — now rebooting; click the pedal when it appears`);
       await port.open({ baudRate: 134 });
       const goneMs = await Promise.race([gone, new Promise((r) => setTimeout(() => r(null), 1500))]);
       try { await port.close(); } catch (e) { /* already left the bus */ }
       log(`${stamp()} serial port ${goneMs === null ? "did NOT vanish within 1.5 s" : `gone after ${goneMs.toFixed(0)} ms`}`);
-      if (goneMs === null) throw new Error("no reboot happened");
-
-      // Step 2: remembered grant?
-      let dev = null;
-      for (let i = 0; i < 20 && !dev; i++) {
-        const known = await navigator.hid.getDevices();
-        dev = known.find((d) => d.vendorId === PJRC_VENDOR_ID && d.productId === HALFKAY_PRODUCT_ID) || null;
-        if (!dev) await new Promise((r) => setTimeout(r, 100));
-      }
-      if (dev) log(`${stamp()} HalfKay found via remembered grant, no picker needed (+${(performance.now() - tReboot).toFixed(0)} ms)`);
-      else {
-        log(`${stamp()} no remembered grant — PICKER OPENING, click the device NOW`);
-        const devices = await navigator.hid.requestDevice({
-          filters: [{ vendorId: PJRC_VENDOR_ID, productId: HALFKAY_PRODUCT_ID }],
-        });
-        if (!devices.length) throw new Error("nothing chosen in the picker");
-        dev = devices[0];
-        log(`${stamp()} picked at +${(performance.now() - tReboot).toFixed(0)} ms after reboot`);
-      }
+      const devices = await picked;
+      if (!devices.length) throw new Error("nothing chosen in the picker");
+      const dev = devices[0];
+      log(`${stamp()} picked at +${(performance.now() - tReboot).toFixed(0)} ms after reboot`);
 
       // Step 4: open and hold.
       await dev.open();
