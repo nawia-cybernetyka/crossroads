@@ -41,15 +41,36 @@ macOS has no MTP, which is why the tool exists at all (see the README).
   into HalfKay when the host sets the serial port's line coding to **134 baud**
   (`usb.c`, `usb_cdc_line_coding[0] == 134` → `_reboot_Teensyduino_()` after
   ~80 ms). Web Serial can do that: `port.open({ baudRate: 134 })`. 134 is a
-  standard POSIX rate, so macOS accepts it. **The mechanism is proven on the
-  pedal:** PlatformIO's upload (the Teensy Loader, which sends exactly this)
-  rebooted a running Mœræ into HalfKay through the panel port during the
-  2026-10-19/20 bench sessions — *most* of the time. It failed occasionally and
-  needed the button. ⚠ Not yet tried from a browser — `spike/reboot.html`
-  exists to try it. Two consequences: the recessed BOOT pinhole stays the
-  documented recovery path, and **the update flow must expect the soft reboot
-  to fail sometimes** — if HalfKay has not appeared within a few seconds, show
-  the pinhole instruction rather than an error.
+  standard POSIX rate, so macOS accepts it. **Proven from a browser
+  2026-10-21** (FATES00, Chrome on a Mac): the pedal rebooted on the 134-baud
+  open. ⚠ **But the bootloader does not wait.** Measured on the USB bus from the
+  Mac (`stty 134` + a watcher, three runs):
+
+  | after the request | on the bus |
+  |---|---|
+  | ~0 s | serial device gone |
+  | ~0.3 s | HalfKay (0x0478) enumerated |
+  | ~3.4 s | HalfKay gone — the bootloader ran the firmware again by itself |
+  | ~3.9 s | serial device back |
+
+  **If nothing claims HalfKay within about three seconds, the pedal boots its
+  firmware as if nothing happened.** This is why the first browser test
+  "rebooted but could not claim" (Claim was clicked 32 s later), and almost
+  certainly why PlatformIO's upload occasionally missed too. Consequences:
+
+  - **Reboot and claim are ONE gesture**, not two steps. Open the WebHID picker
+    first (it consumes the click, and its list updates live), *then* send the
+    134-baud open; HalfKay appears in the picker ~0.3 s later and the customer
+    clicks the only entry. If Chrome remembered a grant for the device, no
+    picker at all and the page opens it itself. `spike/reboot.html` does this.
+  - **Open question: does the bootloader stay once claimed**, or must the erase
+    start inside the window too? The spike holds the device for 8 s and says.
+    Until answered, the flasher should be ready to send the first block the
+    instant the device opens — nothing to lose either way.
+  - The recessed BOOT pinhole stays the documented recovery path, and a missed
+    window is a "try again", not an error.
+  - Whether Chrome persists the grant depends on HalfKay reporting a serial
+    number; the spike logs it.
 
 ## The protocol
 
@@ -153,13 +174,13 @@ error words above are the hooks for those sentences.
 
 ## Open
 
-- [ ] Try `spike/reboot.html` on a pedal: does Chrome's 134-baud open reboot it
-      into HalfKay, and can the same page then claim the bootloader over WebHID?
-      (The mechanism itself is proven via PlatformIO; this tests the browser.)
-- [ ] Why does the soft reboot occasionally fail from PlatformIO? If it is the
-      ~80 ms timer racing the port close, the browser page can hold the port
-      open longer before closing; if it is the pedal's firmware being busy, it
-      is the firmware's problem.
+- [x] ~~Does Chrome's 134-baud open reboot the pedal?~~ Yes, 2026-10-21. The
+      bootloader then gives up after ~3 s (table above).
+- [ ] `spike/reboot.html` one-click chain: can a browser claim HalfKay inside the
+      window, does the bootloader STAY once claimed, and does HalfKay report a
+      serial number (→ Chrome can remember the grant and skip the picker)?
+- [x] ~~Why does the soft reboot occasionally fail from PlatformIO?~~ Almost
+      certainly the same ~3 s window: the loader sometimes claims too late.
 - [ ] Measure `@put` throughput over the Teensy's CDC (480 Mbit USB, SPI card at
       8 MHz): is chunked acknowledgement needed, or does one `+go` suffice?
 - [ ] Does a Web Serial port permission survive the re-enumeration after an

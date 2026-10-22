@@ -64,12 +64,18 @@ required on every BOM.
 A working soft reboot would remove that one manual step. Worth having, not worth
 blocking on.
 
-## Soft reboot — `reboot.html` (added 2026-10-20, untested from a browser)
+## Soft reboot — `reboot.html`
 
-The mechanism is already proven on a real pedal: PlatformIO's upload sends the
-same 134-baud request and rebooted a running Mœræ into HalfKay through the
-panel port on 2026-10-19/20 — most of the time, with occasional failures that
-needed the button. What this page tests is whether a *browser* can send it.
+**2026-10-21, FATES00, Chrome on a Mac: the 134-baud open reboots the pedal into
+HalfKay — and HalfKay runs the firmware again by itself ~3 s later if nothing
+claims it.** First attempt: Identify passed, Reboot passed (screen went dark and
+came back on its own), Claim 32 s later found nothing. Timed from the Mac with
+`stty -f <port> 134` and a bus watcher: serial gone at once, HalfKay up at
++0.3 s, HalfKay gone at +3.4 s, serial back at +3.9 s. Same on three runs.
+
+The page now chains reboot and claim in one click and holds the device for 8 s
+to learn whether the bootloader stays once claimed. Open questions and the
+design consequence are in `docs/card-access.md`.
 
 The Teensy 4 core reboots into HalfKay when the serial port is opened at
 **134 baud**. `reboot.html` does that with Web Serial and then tries to claim the

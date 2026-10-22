@@ -57,13 +57,16 @@ Two routes, and the app should offer both:
       core (`usb.c`): setting the CDC line coding to 134 baud arms an ~80 ms timer
       that calls `_reboot_Teensyduino_()`.** Reachable from Web Serial as
       `port.open({ baudRate: 134 })`. HalfKay's `0xFFFFFF` was the wrong direction
-      (it LEAVES the bootloader). Proven on the pedal via
-      PlatformIO's upload (same mechanism), 2026-10-19/20 — works most of the
-      time, failed occasionally. Untested from a browser — `spike/reboot.html`.
-      The recessed button stays the recovery route.
+      (it LEAVES the bootloader). Proven from Chrome
+      2026-10-21. ⚠ The bootloader gives up and runs the firmware after ~3 s if
+      nothing claims it, so reboot + claim must be one gesture — details and
+      the measured timeline in `docs/card-access.md`. The recessed button stays
+      the recovery route.
 - [ ] Does a WebHID permission granted for the *serial* identity carry over to
-      the *bootloader* identity? Untested — the reboot never happened, so this
-      was never actually exercised.
+      the *bootloader* identity? No — they are different USB devices, and the
+      serial side is Web Serial, not WebHID. The useful question is whether Chrome
+      remembers the HalfKay grant across reboots (needs a serial number); the
+      spike logs it.
 - [x] ~~Decide the file-transfer protocol over USB Serial (Mœræ only).~~ Decided
       2026-10-20: through the pedal, `@`-prefixed line protocol — `docs/card-access.md`.
 - [ ] Confirm Seed3 DFU entry: is it BOOT+RESET, or single-button?
