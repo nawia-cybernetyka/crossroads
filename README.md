@@ -35,9 +35,14 @@ Leshy are Teensy 4.1 (HalfKay over WebHID), while Rusalka is a Daisy Seed3
 from nawiacybernetyka.com, checked against an Ed25519 signature, and written to
 the pedal's bootloader over USB.
 
-Delivery is **browser-first**: WebHID in Chrome or Edge means no install, no
-code signing, and no OS-specific builds. A native app (Tauri) stays possible
-later without a rewrite — see the seam below.
+Delivery was **browser-first** (WebHID in Chrome or Edge: no install, no code
+signing, no OS-specific builds), and browser flashing works. But the Teensy
+bootloader gives up after ~3 s and Chrome cannot remember a device with no
+serial number, so a browser update means picking a nameless device in a
+three-second window on every update (`docs/card-access.md`). **Since
+2026-10-21 the customer's app is native (Tauri)**: same UI and core, a
+hidapi transport, no picker. The browser build remains the bench harness and
+a fallback — see the seam below.
 
 ## The seam
 

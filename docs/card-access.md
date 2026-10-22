@@ -89,8 +89,10 @@ macOS has no MTP, which is why the tool exists at all (see the README).
     5. The picker is Chrome's own dialog and the bootloader has no product
        string, so the entry reads as whatever Chrome calls a nameless device —
        the page must show a picture of the dialog with that entry circled.
-    This 3-second click is the strongest remaining argument for the native app
-    (hidapi has no picker). Not blocking; the browser flow works.
+    **→ Decided 2026-10-21: the native app is the customer's update path.**
+    With hidapi there is no picker, so reboot, claim and flash are one click
+    with nothing to choose. The browser flow stays as the core and the bench
+    harness, and as the fallback it already is. See `docs/native-app.md`.
 
 ## The protocol
 
