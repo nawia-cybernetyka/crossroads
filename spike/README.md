@@ -73,9 +73,13 @@ came back on its own), Claim 32 s later found nothing. Timed from the Mac with
 `stty -f <port> 134` and a bus watcher: serial gone at once, HalfKay up at
 +0.3 s, HalfKay gone at +3.4 s, serial back at +3.9 s. Same on three runs.
 
-The page now chains reboot and claim in one click and holds the device for 8 s
-to learn whether the bootloader stays once claimed. Open questions and the
-design consequence are in `docs/card-access.md`.
+Runs 2–3 the same evening: polling for a grant before the picker wasted 2 s
+(missed); picker first, then reboot — picked at +2.7 s, HalfKay opened at
++2.73 s, held open, **firmware back at +3.8 s regardless**. The bootloader does
+not stay for an open device; the erase must start inside the window. HalfKay
+reports no serial number. Open: whether Chrome remembers the grant anyway
+(the page now tries getDevices() alongside the picker). Design consequences
+in `docs/card-access.md`.
 
 The Teensy 4 core reboots into HalfKay when the serial port is opened at
 **134 baud**. `reboot.html` does that with Web Serial and then tries to claim the

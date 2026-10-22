@@ -63,14 +63,20 @@ macOS has no MTP, which is why the tool exists at all (see the README).
     134-baud open; HalfKay appears in the picker ~0.3 s later and the customer
     clicks the only entry. If Chrome remembered a grant for the device, no
     picker at all and the page opens it itself. `spike/reboot.html` does this.
-  - **Open question: does the bootloader stay once claimed**, or must the erase
-    start inside the window too? The spike holds the device for 8 s and says.
-    Until answered, the flasher should be ready to send the first block the
-    instant the device opens — nothing to lose either way.
+  - **The bootloader does NOT stay once claimed (run 3, 2026-10-21):** picked
+    at +2.7 s, opened at +2.73 s, held open — firmware back at +3.8 s anyway.
+    **The erase (block 0) must be sent inside the window.** So the flasher is
+    armed before the reboot: hex parsed, blocks ready, and the first write goes
+    out the instant the device opens. Once programming has started the
+    bootloader stays (PlatformIO's 110-block uploads finish fine).
   - The recessed BOOT pinhole stays the documented recovery path, and a missed
     window is a "try again", not an error.
-  - Whether Chrome persists the grant depends on HalfKay reporting a serial
-    number; the spike logs it.
+  - **HalfKay reports no serial number** (run 3). Whether Chrome still
+    remembers the grant across the reboot is the next run's question; if it
+    does, every update after the first is hands-free. If it does not, every
+    update is a picker click inside ~3 s — survivable with an automatic
+    "try again" (re-send the 134-baud open while the picker stays up, so the
+    pedal reappears in the list every few seconds), but worth avoiding.
 
 ## The protocol
 
@@ -176,9 +182,11 @@ error words above are the hooks for those sentences.
 
 - [x] ~~Does Chrome's 134-baud open reboot the pedal?~~ Yes, 2026-10-21. The
       bootloader then gives up after ~3 s (table above).
-- [ ] `spike/reboot.html` one-click chain: can a browser claim HalfKay inside the
-      window, does the bootloader STAY once claimed, and does HalfKay report a
-      serial number (→ Chrome can remember the grant and skip the picker)?
+- [x] ~~Can a browser claim HalfKay inside the window?~~ Yes — picker first,
+      then the reboot; picked at +2.7 s (run 3).
+- [x] ~~Does the bootloader stay once claimed?~~ No. Erase inside the window.
+- [ ] Does Chrome remember the HalfKay grant across a reboot although the
+      device has no serial number? Run 4 of `spike/reboot.html`.
 - [x] ~~Why does the soft reboot occasionally fail from PlatformIO?~~ Almost
       certainly the same ~3 s window: the loader sometimes claims too late.
 - [ ] Measure `@put` throughput over the Teensy's CDC (480 Mbit USB, SPI card at

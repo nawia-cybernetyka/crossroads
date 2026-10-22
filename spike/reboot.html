@@ -121,10 +121,26 @@ need no recessed button.</p>
       const goneMs = await Promise.race([gone, new Promise((r) => setTimeout(() => r(null), 1500))]);
       try { await port.close(); } catch (e) { /* already left the bus */ }
       log(`${stamp()} serial port ${goneMs === null ? "did NOT vanish within 1.5 s" : `gone after ${goneMs.toFixed(0)} ms`}`);
-      const devices = await picked;
-      if (!devices.length) throw new Error("nothing chosen in the picker");
-      const dev = devices[0];
-      log(`${stamp()} picked at +${(performance.now() - tReboot).toFixed(0)} ms after reboot`);
+      // Remembered grant? (Run 3 created the first grant in this profile; HalfKay
+      // reports NO serial number, so this run tells us whether Chrome keeps the
+      // grant anyway.) getDevices() lists granted devices that are connected;
+      // poll it while the picker sits open in parallel. Whichever wins, wins.
+      const remembered = (async () => {
+        for (let i = 0; i < 25; i++) {
+          const known = await navigator.hid.getDevices();
+          const d = known.find((k) => k.vendorId === PJRC_VENDOR_ID && k.productId === HALFKAY_PRODUCT_ID);
+          if (d) return d;
+          await new Promise((r) => setTimeout(r, 100));
+        }
+        return null;
+      })();
+      let viaGrant = false;
+      const dev = await Promise.race([
+        remembered.then((d) => d ? (viaGrant = true, d) : new Promise(() => {})),   // null = never resolves
+        picked.then((ds) => ds[0] ?? null),
+      ]);
+      if (!dev) throw new Error("nothing chosen in the picker and no remembered grant");
+      log(`${stamp()} HalfKay in hand at +${(performance.now() - tReboot).toFixed(0)} ms after reboot${viaGrant ? " — via REMEMBERED GRANT (cancel the picker)" : " — via the picker"}`);
 
       // Step 4: open and hold.
       await dev.open();
@@ -133,8 +149,8 @@ need no recessed button.</p>
       const cameBack = await Promise.race([back, new Promise((r) => setTimeout(() => r(false), 8000))]);
       log(`${stamp()} after hold: device.opened=${dev.opened}, serial port came back=${cameBack}`);
       log(cameBack
-        ? `${stamp()} RESULT: bootloader gave up even though we held it open — the flash must START inside the window.`
-        : `${stamp()} RESULT: bootloader STAYS while claimed — claim inside the window, then flash at leisure.`);
+        ? `${stamp()} (known since run 3: the bootloader gives up even when held open — the erase must start inside the window)`
+        : `${stamp()} unexpected: bootloader stayed this time`);
       await dev.close();
     } catch (e) { log(`${stamp()} FAIL reboot chain: ${e.message}`); }
   };
