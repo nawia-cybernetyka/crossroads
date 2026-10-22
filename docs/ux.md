@@ -29,7 +29,13 @@ Two jobs, from the customer's side:
   opened at 134 baud (see `docs/card-access.md`); if that holds up from Chrome,
   the customer never touches the pinhole unless an update fails. The pinhole
   sentence still has to be the right sentence, with a picture, on the failure
-  screen.
+  screen. **Measured 2026-10-21: it works, with a catch** — the bootloader
+  runs the firmware again after ~3 s if nothing starts programming it, and
+  Chrome forgets the bootloader between updates, so **every update is "click
+  Update, then pick your pedal in the dialog within about three seconds"**,
+  with an automatic retry that brings the pedal back into the dialog if the
+  click was late. The page needs a picture of that dialog with the right entry
+  marked, because the bootloader has no name of its own.
 - **Card-to-card copy and per-file overwrite** belong here rather than on the
   pedal, because a real screen affords them — see `setlist-editor.md`.
 - **Stakes are high and the audience is not technical.** This writes firmware to

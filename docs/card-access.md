@@ -71,12 +71,26 @@ macOS has no MTP, which is why the tool exists at all (see the README).
     bootloader stays (PlatformIO's 110-block uploads finish fine).
   - The recessed BOOT pinhole stays the documented recovery path, and a missed
     window is a "try again", not an error.
-  - **HalfKay reports no serial number** (run 3). Whether Chrome still
-    remembers the grant across the reboot is the next run's question; if it
-    does, every update after the first is hands-free. If it does not, every
-    update is a picker click inside ~3 s — survivable with an automatic
-    "try again" (re-send the 134-baud open while the picker stays up, so the
-    pedal reappears in the list every few seconds), but worth avoiding.
+  - **HalfKay reports no serial number, and Chrome does NOT remember the
+    grant** (run 4: a grant made in run 3 was gone after the reboot;
+    `getDevices()` never listed the device, the pick came via the picker at
+    +2.0 s). **Every firmware update is a picker click inside ~3 s.** That is
+    the design, and it is survivable:
+    1. The flasher is fully armed before the reboot (hex parsed, blocks ready).
+    2. One click: open the picker, send the 134-baud open, and tell the
+       customer in the page what to click.
+    3. The instant the pick lands: open, send block 0 (the erase). Programming
+       keeps the bootloader alive from there.
+    4. **Automatic retry:** if the pick lands after the window (open fails, or
+       the device vanished), wait for the serial port to return (~4 s) and
+       re-send the 134-baud open; the pedal reappears in the picker. Loop until
+       picked or cancelled. The customer sees "it disappeared — it's back, try
+       again", never an error.
+    5. The picker is Chrome's own dialog and the bootloader has no product
+       string, so the entry reads as whatever Chrome calls a nameless device —
+       the page must show a picture of the dialog with that entry circled.
+    This 3-second click is the strongest remaining argument for the native app
+    (hidapi has no picker). Not blocking; the browser flow works.
 
 ## The protocol
 
@@ -185,8 +199,10 @@ error words above are the hooks for those sentences.
 - [x] ~~Can a browser claim HalfKay inside the window?~~ Yes — picker first,
       then the reboot; picked at +2.7 s (run 3).
 - [x] ~~Does the bootloader stay once claimed?~~ No. Erase inside the window.
-- [ ] Does Chrome remember the HalfKay grant across a reboot although the
-      device has no serial number? Run 4 of `spike/reboot.html`.
+- [x] ~~Does Chrome remember the HalfKay grant across a reboot?~~ No (run 4).
+      Picker every time; retry loop above.
+- [ ] What exactly does Chrome's picker call the nameless HalfKay entry? Needed
+      for the instruction sentence and its picture.
 - [x] ~~Why does the soft reboot occasionally fail from PlatformIO?~~ Almost
       certainly the same ~3 s window: the loader sometimes claims too late.
 - [ ] Measure `@put` throughput over the Teensy's CDC (480 Mbit USB, SPI card at

@@ -77,9 +77,11 @@ Runs 2–3 the same evening: polling for a grant before the picker wasted 2 s
 (missed); picker first, then reboot — picked at +2.7 s, HalfKay opened at
 +2.73 s, held open, **firmware back at +3.8 s regardless**. The bootloader does
 not stay for an open device; the erase must start inside the window. HalfKay
-reports no serial number. Open: whether Chrome remembers the grant anyway
-(the page now tries getDevices() alongside the picker). Design consequences
-in `docs/card-access.md`.
+reports no serial number, and **run 4 showed Chrome does not remember the
+grant** across the reboot (the pick came via the picker again, +2.0 s). Every
+update is a picker click inside the window. Design consequences, including the
+automatic retry, in `docs/card-access.md`. **The soft-reboot question is
+closed**; the next bench work is the firmware `@` protocol.
 
 The Teensy 4 core reboots into HalfKay when the serial port is opened at
 **134 baud**. `reboot.html` does that with Web Serial and then tries to claim the
